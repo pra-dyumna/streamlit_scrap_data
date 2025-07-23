@@ -6,3 +6,5 @@ selenium
 langchain
 langchain-community
 unstructured
+uvicorn
+fastapi
