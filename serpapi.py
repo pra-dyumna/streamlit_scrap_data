@@ -1,77 +1,3 @@
-# from serpapi import GoogleSearch
-
-# def get_search_results(keyword):
-#     params = {
-#         "engine": "google",
-#         "q": keyword,
-#         "api_key": "b39c63d4d19969f216fe515b23e526d3111a568d0aeb9280a01df11afb33711a",
-#         "num": 10
-#     }
-#     search = GoogleSearch(params)
-#     results = search.get_dict()
-#     urls = [result['link'] for result in results['organic_results']]
-#     return urls
-
-# import requests, re, tldextract
-# from bs4 import BeautifulSoup
-
-# def scrape_website(url):
-#     try:
-#         resp = requests.get(url, timeout=10)
-#         soup = BeautifulSoup(resp.text, 'html.parser')
-#         print(f"soup: {soup}")
-#         # Extract email and phone
-#         text = soup.get_text()
-
-#         print(f"text : {text}")
-#         emails = re.findall(r"[a-zA-Z0-9_s.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+", text)
-#         phones = re.findall(r"\+?\d[\d\s\-\(\)]{7,}", text)
-        
-#         # Contact Page URL
-#         contact_links = [a['href'] for a in soup.find_all('a', href=True) if 'contact' in a['href'].lower()]
-#         contact_url = contact_links[0] if contact_links else None
-
-#         # Domain
-#         domain = tldextract.extract(url).top_domain_under_public_suffix
-        
-#         return {
-#             "url": url,
-#             "domain": domain,
-#             "contact_url": contact_url,
-#             "email": emails[0] if emails else None,
-#             "phone": phones[0] if phones else None
-#         }
-#     except Exception as e:
-#         print(f"Failed on {url}: {e}")
-#         return None
-
-
-# import csv
-
-# def save_to_csv(data_list, filename='scraped_data.csv'):
-#     keys = data_list[0].keys()
-#     with open(filename, 'w', newline='', encoding='utf-8') as f:
-#         writer = csv.DictWriter(f, fieldnames=keys)
-#         writer.writeheader()
-#         writer.writerows(data_list)
-
-
-# keywords = ["digital marketing agencies in USA"]
-# all_data = []
-
-# for keyword in keywords:
-#     urls = get_search_results(keyword)
-#     for url in urls:
-#         data = scrape_website(url)
-#         if data:
-#             all_data.append(data)
-
-# save_to_csv(all_data)
-
-
-
-
-
 
 import requests
 from bs4 import BeautifulSoup
@@ -390,3 +316,35 @@ def extract_info_from_page(url):
 
 
 
+def search_and_extract(query, location="usa", num_results=10):
+
+    g_urls = search_google(query, location, num_results)
+    print(f"Google URLs: {g_urls}")
+
+    # Step 2: If Google returned no results, fallback to Bing
+    if not g_urls:
+        b_urls = search_bing(query, location, num_results)  # Make sure Bing accepts 3 args
+        print(f"Bing URLs: {b_urls}")
+        urls = b_urls if b_urls else []
+    else:
+        urls = g_urls
+
+    data = []
+
+    for url, _ in urls:
+        info = extract_info_from_page(url)
+        print(f"Extracted info: {info}")
+        
+        # Ensure all fields are present and not NaN
+        clean_info = {
+            "Website URL": info.get("Website URL", url),
+            "Phone Number": info.get("Phone Number", ""),
+            "Email Address": info.get("Email Address", ""),
+            "Contact Us": info.get("Contact Us", "")
+        }
+        
+        data.append(clean_info)
+        time.sleep(random.uniform(2, 3))
+    
+    # Convert to DataFrame at the end if needed
+    return pd.DataFrame(data) if data else pd.DataFrame()
